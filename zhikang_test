@@ -1,0 +1,50 @@
+target_list = pickle.load(open('/workspace/HangLi/ocean_talk/zhikang/yeqiu_clip_0429/voice_attention_tag.pkl','rb'))
+embed_root = '/workspace/HangLi/ocean_talk/zhikang/yeqiu_clip_0429/embed/'
+window_size = 200
+window_step = 200
+sent_max_len = 100
+for course_content in target_list:
+    if len(course_content) == 0:
+        continue
+    course_id = course_content[0][0].split('_')[0]
+    writer = tf.python_io.TFRecordWriter('/workspace/HangLi/ocean_talk/zhikang/yeqiu_clip_0429/va_widxdahai_tfrecord_200_200/{}.tfrecord'.format(course_id))
+    window_num = (len(course_content)-window_size)//window_step
+    window_num = window_num + 1 if window_num*window_step+window_size<len(course_content) else window_num
+    for i in range(window_num+1):
+        # get the position
+        window_content = course_content[i*window_step:i*window_step+window_size]
+        window_voice_embed = []
+        window_sent_word_idx = []
+        window_sent_word_num = []
+        window_sent_label = []
+        window_content_str = []
+        for wav_file, label, sent_text in window_content:
+            if len(re.sub('[^\w]|_','',sent_text)) == 0:
+                continue
+            voice_embed = np.load(os.path.join(embed_root, wav_file.split('_')[0], re.sub('wav','npy',wav_file))).mean(axis=0)
+            window_voice_embed.append(voice_embed)
+            word_idx, sent_len = sent2idx(sent_text, w2i, sent_max_len)
+            window_sent_word_idx.append(word_idx)
+            window_sent_word_num.append(sent_len)
+            window_sent_label.append(label)
+            # add the string into result
+            content_str = '{}_{}_{}'.format(wav_file, label, sent_text)
+            content_str = content_str.encode()
+            window_content_str.append(content_str)
+        window_length = len(window_sent_label)
+        window_voice_embed = np.array(window_voice_embed).astype('float32') # [sent_num, 64]
+        window_sent_word_idx = np.array(window_sent_word_idx).astype('int32') # [sent_num, sent_max_len]
+        features = {}
+        features['voice_embed'] = tf.train.Feature(bytes_list=tf.train.BytesList(value=[window_voice_embed.tostring()]))
+        features['voice_shape'] = tf.train.Feature(int64_list=tf.train.Int64List(value=window_voice_embed.shape))
+        features['sent_word_idx'] = tf.train.Feature(bytes_list=tf.train.BytesList(value=[window_sent_word_idx.tostring()]))
+        features['sent_word_shape'] = tf.train.Feature(int64_list=tf.train.Int64List(value=window_sent_word_idx.shape))
+        features['sent_word_num'] = tf.train.Feature(int64_list=tf.train.Int64List(value=window_sent_word_num))
+        features['sent_label'] = tf.train.Feature(int64_list=tf.train.Int64List(value=window_sent_label))
+        features['length'] = tf.train.Feature(int64_list=tf.train.Int64List(value=[window_length]))
+        features['content'] = tf.train.Feature(bytes_list=tf.train.BytesList(value=window_content_str))
+        tf_features=tf.train.Features(feature=features)
+        tf_example=tf.train.Example(features=tf_features)
+        tf_serialized=tf_example.SerializeToString()
+        writer.write(tf_serialized)
+    writer.close()
