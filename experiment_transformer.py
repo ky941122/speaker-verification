@@ -385,8 +385,8 @@ if __name__ == "__main__":
     config.optim = 'rmsprop'
     config.iteration = 150000
     config.lr = 1e-5
-    config.drop_rate = 0.5
-    config.model_name = "transformer_e-5big"
+    config.drop_rate = 0.7
+    config.model_name = "transformer_e-5big_dropout"
     config.model_path = '/workspace/speaker_verification/{}/'.format(config.model_name)
     config.train_log = os.path.join(config.model_path, "train.log")
     config.lr_decay_step = 150000

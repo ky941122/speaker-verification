@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="490f2edf-5fc2-4a08-b9e1-d9fc446b2368" name="Default Changelist" comment="" />
+    <list default="true" id="490f2edf-5fc2-4a08-b9e1-d9fc446b2368" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/experiment_cnn.py" beforeDir="false" afterPath="$PROJECT_DIR$/experiment_cnn.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/experiment_result.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/experiment_result.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/experiment_sentRNN.py" beforeDir="false" afterPath="$PROJECT_DIR$/experiment_sentRNN.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/experiment_transformer.py" beforeDir="false" afterPath="$PROJECT_DIR$/experiment_transformer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules.py" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -10,23 +18,20 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/experiment_transformer.py">
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/experiment_nni.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="5645">
-              <caret line="387" column="15" lean-forward="true" selection-start-line="387" selection-start-column="15" selection-end-line="387" selection-end-column="15" />
-              <folding>
-                <element signature="e#127#136#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="386">
+              <caret line="87" lean-forward="true" selection-start-line="87" selection-end-line="87" />
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/experiment_cnn.py">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/config_nni.yml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="54">
-              <caret line="3" column="15" lean-forward="true" selection-start-line="3" selection-start-column="15" selection-end-line="3" selection-end-column="15" />
+            <state relative-caret-position="72">
+              <caret line="4" column="16" selection-start-line="4" selection-start-column="16" selection-end-line="4" selection-end-column="16" />
             </state>
           </provider>
         </entry>
@@ -45,7 +50,11 @@
       <find>dimension_value</find>
       <find>shape[0]</find>
       <find>smart_cond</find>
+      <find>config</find>
     </findStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -66,24 +75,55 @@
         <option value="$PROJECT_DIR$/experiment_sent_length_weight.py" />
         <option value="$PROJECT_DIR$/test_zhikang.py" />
         <option value="$PROJECT_DIR$/experiment_topk.py" />
-        <option value="$PROJECT_DIR$/experiment_sentRNN.py" />
-        <option value="$PROJECT_DIR$/experiment_transformer.py" />
         <option value="$PROJECT_DIR$/experiment_use_previous_outcome.py" />
         <option value="$PROJECT_DIR$/experiment_cnn.py" />
+        <option value="$PROJECT_DIR$/experiment_tcn.py" />
+        <option value="$PROJECT_DIR$/experiment_transformer.py" />
+        <option value="$PROJECT_DIR$/make_postag_data.py" />
+        <option value="$PROJECT_DIR$/experiment_transformer_finetune.py" />
+        <option value="$PROJECT_DIR$/experiment_multihead.py" />
+        <option value="$PROJECT_DIR$/experiment_XL.py" />
+        <option value="$PROJECT_DIR$/experiment_transformer_keeptraining.py" />
+        <option value="$APPLICATION_CONFIG_DIR$/scratches/scratch_4.py" />
+        <option value="$PROJECT_DIR$/multihead_voice_attention.py" />
+        <option value="$PROJECT_DIR$/experiment_multiheadAtt.py" />
+        <option value="$PROJECT_DIR$/experiment_transformer_postag.py" />
+        <option value="$PROJECT_DIR$/remove_dev_data_from_dahai_corpus.py" />
+        <option value="$PROJECT_DIR$/experiment_sent_rnn_postag.py" />
+        <option value="$APPLICATION_CONFIG_DIR$/scratches/scratch_5.py" />
+        <option value="$PROJECT_DIR$/make_data_for_pretrain_sent_rnn2.py" />
+        <option value="$PROJECT_DIR$/make_data_for_pretrain_sent_rnn.py" />
+        <option value="$PROJECT_DIR$/read_ckpt.py" />
+        <option value="$PROJECT_DIR$/modules.py" />
+        <option value="$PROJECT_DIR$/experiment_pretrain_transformer.py" />
+        <option value="$PROJECT_DIR$/experiment_pretrain_rnn_concat_and_mean_prob.py" />
+        <option value="$PROJECT_DIR$/experiment_transformer_with_pretrain.py" />
+        <option value="$PROJECT_DIR$/experiment_sentRNN_with_pretrain_RNN.py" />
+        <option value="$PROJECT_DIR$/experiment_sentRNN_double_classification.py" />
+        <option value="$APPLICATION_CONFIG_DIR$/scratches/scratch_6.py" />
+        <option value="$PROJECT_DIR$/experiment_classify_twice.py" />
+        <option value="$PROJECT_DIR$/experiment_sentRNN.py" />
+        <option value="$PROJECT_DIR$/experiment_one_sample_per_course.py" />
+        <option value="$PROJECT_DIR$/experiment_sentRNN_no_concat.py" />
+        <option value="$PROJECT_DIR$/experiment_pretrain_rnn.py" />
+        <option value="$PROJECT_DIR$/config_nni.yml" />
+        <option value="$PROJECT_DIR$/experiment_nni.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="1">
-    <option name="x" value="1451" />
-    <option name="y" value="33" />
-    <option name="width" value="1895" />
-    <option name="height" value="1032" />
+  <component name="ProjectFrameBounds">
+    <option name="x" value="1452" />
+    <option name="y" value="32" />
+    <option name="width" value="1893" />
+    <option name="height" value="1040" />
   </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -91,14 +131,24 @@
               <item name="speaker_verification" type="b2602c69:ProjectViewProjectNode" />
               <item name="speaker_verification" type="462c0819:PsiDirectoryNode" />
             </path>
+            <path>
+              <item name="speaker_verification" type="b2602c69:ProjectViewProjectNode" />
+              <item name="Scratches and Consoles" type="1a2a3e82:ScratchProjectViewPane$MyProjectNode" />
+            </path>
+            <path>
+              <item name="speaker_verification" type="b2602c69:ProjectViewProjectNode" />
+              <item name="Scratches and Consoles" type="1a2a3e82:ScratchProjectViewPane$MyProjectNode" />
+              <item name="Scratches" type="d62648e6:ScratchProjectViewPane$MyRootNode" />
+            </path>
           </expand>
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="Python" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="fileTemplates" />
   </component>
@@ -114,6 +164,56 @@
       </list>
     </option>
   </component>
+  <component name="RunManager" selected="Python.scratch_6">
+    <configuration name="scratch_4" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="speaker_verification" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$APPLICATION_CONFIG_DIR$/scratches" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$APPLICATION_CONFIG_DIR$/scratches/scratch_4.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="scratch_6" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="speaker_verification" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$APPLICATION_CONFIG_DIR$/scratches" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$APPLICATION_CONFIG_DIR$/scratches/scratch_6.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.scratch_6" />
+        <item itemvalue="Python.scratch_4" />
+      </list>
+    </recent_temporary>
+  </component>
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -128,15 +228,15 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1451" y="33" width="1895" height="1032" extended-state="1" />
+    <frame x="1452" y="32" width="1893" height="1040" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.14941302" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.18429486" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.7584388" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -144,61 +244,13 @@
       <window_info anchor="bottom" id="Version Control" order="7" />
       <window_info anchor="bottom" id="Terminal" order="8" />
       <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.5005291" side_tool="true" weight="0.48739496" />
-      <window_info anchor="bottom" id="Python Console" order="10" sideWeight="0.4994709" weight="0.48723406" />
+      <window_info anchor="bottom" id="Python Console" order="10" sideWeight="0.4994709" weight="0.7246835" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
     </layout>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/../bert/modeling.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-3361" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../highlights/LSTMautoencoder.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../highlights/HierachicalRNNsAutoEncoder.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="718">
-          <caret line="63" column="13" lean-forward="true" selection-start-line="63" selection-start-column="13" selection-end-line="63" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiment_BN2.py" />
-    <entry file="file://$PROJECT_DIR$/experiment_BN.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="844">
-          <caret line="360" column="27" selection-start-line="360" selection-start-column="27" selection-end-line="360" selection-end-column="27" />
-          <folding>
-            <element signature="e#118#127#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../asr_scoring/TextualFeatureExtracter.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../asr_scoring/RNNModel.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-18" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../asr_scoring/RNN_trainer.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="489">
-          <caret line="66" column="54" selection-start-line="66" selection-start-column="54" selection-end-line="66" selection-end-column="54" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/dahai_w2vmeantrain_rcon_symqch_10_balan_2_ndcay.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="772">
-          <caret line="285" column="27" selection-start-line="285" selection-start-column="27" selection-end-line="285" selection-end-column="27" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/anaconda/lib/python3.6/site-packages/tensorflow/python/framework/constant_op.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="342">
@@ -261,34 +313,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/experiment.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-3156">
-          <caret line="103" column="84" selection-start-line="103" selection-start-column="84" selection-end-line="103" selection-end-column="84" />
-          <folding>
-            <element signature="e#124#133#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/experiment_crf.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-2360">
           <caret line="118" column="22" selection-start-line="118" selection-start-column="22" selection-end-line="118" selection-end-column="22" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiment_postag.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="236">
-          <caret line="230" column="74" lean-forward="true" selection-start-line="230" selection-start-column="74" selection-end-line="230" selection-end-column="74" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiment_sentRNN.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="6215">
-          <caret line="381" column="27" selection-start-line="381" selection-start-column="27" selection-end-line="381" selection-end-column="27" />
         </state>
       </provider>
     </entry>
@@ -298,16 +326,6 @@
           <caret line="14" column="64" lean-forward="true" selection-start-line="14" selection-start-column="64" selection-end-line="14" selection-end-column="64" />
           <folding>
             <element signature="e#119#128#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/modules.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="311">
-          <caret line="207" column="18" lean-forward="true" selection-start-line="207" selection-start-column="18" selection-end-line="207" selection-end-column="18" />
-          <folding>
-            <element signature="e#184#202#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -323,16 +341,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1929">
           <caret line="229" lean-forward="true" selection-start-line="229" selection-end-line="229" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiment_transformer.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5645">
-          <caret line="387" column="15" lean-forward="true" selection-start-line="387" selection-start-column="15" selection-end-line="387" selection-end-column="15" />
-          <folding>
-            <element signature="e#127#136#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -368,8 +376,256 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/experiment_cnn.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="54">
-          <caret line="3" column="15" lean-forward="true" selection-start-line="3" selection-start-column="15" selection-end-line="3" selection-end-column="15" />
+        <state relative-caret-position="174">
+          <caret line="373" lean-forward="true" selection-start-line="373" selection-end-line="373" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_tcn.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="209">
+          <caret line="112" column="35" lean-forward="true" selection-start-line="112" selection-start-column="35" selection-end-line="112" selection-end-column="35" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/make_postag_data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="18" lean-forward="true" selection-start-line="18" selection-end-line="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_transformer_finetune.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="245">
+          <caret line="193" column="8" selection-start-line="193" selection-start-column="8" selection-end-line="193" selection-end-column="8" />
+          <folding>
+            <element signature="e#263#272#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_postag.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1917">
+          <caret line="105" column="113" lean-forward="true" selection-start-line="105" selection-start-column="113" selection-end-line="105" selection-end-column="113" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch_4.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="216">
+          <caret line="12" lean-forward="true" selection-start-line="12" selection-end-line="12" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/multihead_voice_attention.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="341">
+          <caret line="29" column="67" lean-forward="true" selection-start-line="29" selection-start-column="67" selection-end-line="29" selection-end-column="67" />
+          <folding>
+            <element signature="e#130#153#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/remove_dev_data_from_dahai_corpus.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="72">
+          <caret line="4" column="34" selection-start-line="4" selection-start-column="34" selection-end-line="4" selection-end-column="34" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_multiheadAtt.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="658">
+          <caret line="452" column="31" selection-start-line="452" selection-start-column="31" selection-end-line="452" selection-end-column="31" />
+          <folding>
+            <element signature="e#129#138#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch_5.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-87">
+          <caret line="16" column="28" selection-start-line="16" selection-start-column="28" selection-end-line="16" selection-end-column="28" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/make_data_for_pretrain_sent_rnn.py" />
+    <entry file="file://$PROJECT_DIR$/make_data_for_pretrain_sent_rnn2.py" />
+    <entry file="file://$PROJECT_DIR$/make_text_and_tfrecord_for_pretrain_sent_rnn.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1572" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_transformer_keeptraining.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="476">
+          <caret line="260" column="99" lean-forward="true" selection-start-line="260" selection-start-column="99" selection-end-line="260" selection-end-column="99" />
+          <folding>
+            <element signature="e#268#277#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/read_ckpt.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="522">
+          <caret line="29" column="21" selection-start-line="29" selection-start-column="21" selection-end-line="29" selection-end-column="21" />
+          <folding>
+            <element signature="e#0#47#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_sent_rnn_postag.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="858">
+          <caret line="160" column="35" selection-start-line="160" selection-start-column="35" selection-end-line="160" selection-end-column="35" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_transformer_postag.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="858">
+          <caret line="432" selection-start-line="432" selection-end-line="432" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_XL.py" />
+    <entry file="file://$PROJECT_DIR$/experiment_multihead.py" />
+    <entry file="file://$PROJECT_DIR$/experiment.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="353">
+          <caret line="149" column="77" selection-start-line="149" selection-start-column="77" selection-end-line="149" selection-end-column="77" />
+          <folding>
+            <element signature="e#124#133#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modules.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2714">
+          <caret line="304" column="15" selection-start-line="304" selection-start-column="15" selection-end-line="304" selection-end-column="15" />
+          <folding>
+            <element signature="e#184#202#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_transformer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="126">
+          <caret line="14" selection-start-line="14" selection-end-line="14" />
+          <folding>
+            <element signature="e#127#136#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_transformer_with_pretrain.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1476">
+          <caret line="485" lean-forward="true" selection-start-line="485" selection-end-line="485" />
+          <folding>
+            <element signature="e#142#151#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_pretrain_transformer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="574">
+          <caret line="488" column="24" selection-start-line="488" selection-start-column="24" selection-end-line="488" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_sentRNN_with_pretrain_RNN.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="848">
+          <caret line="521" selection-start-line="521" selection-end-line="521" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_sentRNN_double_classification.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="578">
+          <caret line="454" column="120" lean-forward="true" selection-start-line="454" selection-start-column="120" selection-end-line="454" selection-end-column="120" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch_6.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="182">
+          <caret line="18" lean-forward="true" selection-start-line="18" selection-end-line="18" />
+          <folding>
+            <element signature="e#15#38#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_sentRNN_no_concat.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="479">
+          <caret line="121" column="25" lean-forward="true" selection-start-line="121" selection-start-column="25" selection-end-line="121" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_pretrain_rnn_concat_and_mean_prob.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="252">
+          <caret line="125" column="13" selection-start-line="125" selection-start-column="13" selection-end-line="125" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_classify_twice.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="7542">
+          <caret line="424" selection-start-line="424" selection-end-line="424" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_one_sample_per_course.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="4554">
+          <caret line="258" selection-start-line="258" selection-end-line="258" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_pretrain_rnn.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="162">
+          <caret line="14" lean-forward="true" selection-start-line="14" selection-end-line="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_sentRNN.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="848">
+          <caret line="479" selection-start-line="479" selection-end-line="479" />
+          <folding>
+            <element signature="e#123#132#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiment_nni.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="386">
+          <caret line="87" lean-forward="true" selection-start-line="87" selection-end-line="87" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/config_nni.yml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="72">
+          <caret line="4" column="16" selection-start-line="4" selection-start-column="16" selection-end-line="4" selection-end-column="16" />
         </state>
       </provider>
     </entry>

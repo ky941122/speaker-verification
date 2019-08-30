@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Date   : 2019-07-26
+# @Date   : 2019-08-09
 # @Author : KangYu
-# @File   : experiment_sentRNN.py
+# @File   : experiment_one_sample_per_course.py
 
 import re
 import os
@@ -123,8 +123,8 @@ def train_attention(config):
 
     #######   sent rnn   #######
     with tf.variable_scope("sent_classify_lstm"):
-        lstm_fw_cells = tf.nn.rnn_cell.LSTMCell(num_units=100, use_peepholes=True)
-        lstm_bw_cells = tf.nn.rnn_cell.LSTMCell(num_units=100, use_peepholes=True)
+        lstm_fw_cells = tf.nn.rnn_cell.LSTMCell(num_units=config.rnn_units, use_peepholes=True)
+        lstm_bw_cells = tf.nn.rnn_cell.LSTMCell(num_units=config.rnn_units, use_peepholes=True)
 
         series_outputs, _b = tf.nn.bidirectional_dynamic_rnn(cell_fw=lstm_fw_cells, cell_bw=lstm_bw_cells, inputs=O,
                                                              time_major=False, dtype=tf.float32,
@@ -132,6 +132,22 @@ def train_attention(config):
         sent_O = tf.concat(series_outputs, -1)  # [batch_size, max_sent_num, series_hidden*2]
         sent_O = tf.layers.dropout(sent_O, rate=config.drop_rate, training=is_training)
     ##########################
+
+    # ####### use CuDNNLSTM ########
+    #
+    # with tf.variable_scope("sent_classify_lstm"):
+    #     lstm_fw = tf.keras.layers.CuDNNLSTM(units=100, return_sequences=True)
+    #     lstm_bw = tf.keras.layers.CuDNNLSTM(units=100, return_sequences=True, go_backwards=True)
+    #
+    #     fw_outputs = lstm_fw(O)
+    #     bw_outputs = lstm_bw(O)
+    #     bw_outputs = tf.reverse(bw_outputs, axis=[1])
+    #
+    #     sent_O = tf.concat([fw_outputs, bw_outputs], axis=-1)
+    #     print("sent_O", sent_O.shape)
+    #     sent_O = tf.layers.dropout(sent_O, rate=config.drop_rate, training=is_training)
+    #
+    # ##############################
 
     # add another full connected layer
     dense1 = tf.layers.dense(inputs=sent_O, units=128, activation=tf.nn.relu,
@@ -214,7 +230,7 @@ def train_attention(config):
     w2v_np = np.load('/workspace/speaker_verification/data/w2v_online/0718_dahaipretrain/w2v_mtrx.npy')
     w2v_np = np.concatenate([np.array([[0.0] * config.w2v_dim]), w2v_np], axis=0)
 
-    train_root = '/workspace/speaker_verification/data/dahai/train/va_widxdahai_tfrecord_200_100/'
+    train_root = '/share/kangyu/speaker/one_class_per_sample/dahai/train'
     train_dataset = tf.data.TFRecordDataset([os.path.join(train_root, x) for x in os.listdir(train_root)])
     parsed_train = train_dataset.map(parse_helper)
     parsed_train = parsed_train.shuffle(10000)
@@ -227,7 +243,7 @@ def train_attention(config):
     train_iter = parsed_train.make_one_shot_iterator()
     train_next = train_iter.get_next()
 
-    test_zhikang_root = '/workspace/speaker_verification/data/zhikang/test/va_widxdahai_tfrecord_200_200'
+    test_zhikang_root = '/share/kangyu/speaker/one_class_per_sample/zhikang/test'
     test_zhikang_dataset = tf.data.TFRecordDataset(
         [os.path.join(test_zhikang_root, x) for x in os.listdir(test_zhikang_root)])
     parsed_test_zhikang = test_zhikang_dataset.map(parse_helper)
@@ -241,7 +257,7 @@ def train_attention(config):
     test_zhikang_iter = parsed_test_zhikang.make_one_shot_iterator()
     test_zhikang_next = test_zhikang_iter.get_next()
 
-    test_dahai_root = '/workspace/speaker_verification/data/dahai/test/va_widxdahai_tfrecord_200_200'
+    test_dahai_root = '/share/kangyu/speaker/one_class_per_sample/dahai/test'
     test_dahai_dataset = tf.data.TFRecordDataset(
         [os.path.join(test_dahai_root, x) for x in os.listdir(test_dahai_root)])
     parsed_test_dahai = test_dahai_dataset.map(parse_helper)
@@ -447,19 +463,19 @@ def write_log(message):
 
 if __name__ == "__main__":
     config = configuration()
-    config.batch_size = 64
+    config.batch_size = 1
     config.optim = 'adam'
     config.iteration = 50000
-    config.lr = 1e-2
+    config.lr = 1e-3
     config.drop_rate = 0.5
-    config.model_name = "pure_sentrnn_for_compare_with_postag_layernorm"
+    config.model_name = "one_sample_per_course_e-3_100"
     config.model_path = '/workspace/speaker_verification/{}/'.format(config.model_name)
     config.train_log = os.path.join(config.model_path, "train.log")
     config.lr_decay_step = 2000
     config.lr_decay_step_force = 10000
     config.model_save_step = 1000
     config.alpha = 10
-    config.max_sent_num = 200
+    config.max_sent_num = None
     config.max_sent_len = 100
     config.w2v_dim = 200
     config.vocab_size = 314041
@@ -468,6 +484,7 @@ if __name__ == "__main__":
 
 
     config.l2_reg_lambda = 1e-4
+    config.rnn_units = 100
 
 
     os.makedirs(os.path.join(config.model_path, "Check_Point"), exist_ok=True)  # make folder to save model

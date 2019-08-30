@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Date   : 2019-07-26
+# @Date   : 2019-07-31
 # @Author : KangYu
-# @File   : experiment_sentRNN.py
+# @File   : experiment_multiheadAtt.py
+
 
 import re
 import os
@@ -10,6 +11,9 @@ import sys
 import functools
 import numpy as np
 import tensorflow as tf
+
+from modules import ff, positional_encoding, multihead_attention
+from multihead_voice_attention import Voice_Multihead_Attention_Moudle
 
 
 def parse_helper(example_proto):
@@ -105,23 +109,33 @@ def train_attention(config):
     lr = tf.placeholder(dtype=tf.float32)  # learning rate
     global_step = tf.Variable(0, name='global_step', trainable=False)
 
-    voice_Q = tf.layers.dense(inputs=voice_embed, units=32, activation=None, use_bias=False,
-                              kernel_initializer=tf.truncated_normal_initializer(), name='attention_w')
-    voice_K = tf.layers.dense(inputs=voice_embed, units=32, activation=None, use_bias=False,
-                              name='attention_w', reuse=True)
-    word_V = word_embed  # shape: (batch, max_length, 200)
-    voice_A = tf.matmul(voice_Q, voice_K, transpose_b=True)  # shape: (batch, max_length, max_length)
-    voice_A = tf.transpose(voice_A, [0, 2, 1])  # transpose to get the correct format
-    voice_A = mask(voice_A, seq_len, mode='add')  # shape: (batch, max_length, max_length)
-    voice_A = tf.transpose(voice_A, [0, 2, 1])  # transpose to get the correct format
-    voice_A = tf.nn.softmax(voice_A)  # shape: (batch, max_length, max_length)
-    voice_O = tf.matmul(voice_A, word_V)  # shape: (batch, max_length, 200)
-    voice_O = mask(voice_O, seq_len, mode='mul', max_len=config.max_sent_num)  # shape: (batch, max_sent_num, 200)
+    # voice_Q = tf.layers.dense(inputs=voice_embed, units=32, activation=None, use_bias=False,
+    #                           kernel_initializer=tf.truncated_normal_initializer(), name='attention_w')  # [config.batch_size, config.max_sent_num, 32]
+    # voice_K = tf.layers.dense(inputs=voice_embed, units=32, activation=None, use_bias=False,
+    #                           name='attention_w', reuse=True)
+
+
+    ######  Voice Multihead Attention ######
+    mva = Voice_Multihead_Attention_Moudle(config)
+    voice_O = mva(voice_embed, voice_embed, word_embed, training=is_training)
+    voice_A = mva.attention
+    voice_A = tf.split(voice_A, config.va_num_heads, axis=0)
+    ########################################
+
+
+    word_V = word_embed  # shape: (batch, config.max_sent_num, 200)
+    # voice_A = tf.matmul(voice_Q, voice_K, transpose_b=True)  # shape: (batch, max_length, max_length)
+    # voice_A = tf.transpose(voice_A, [0, 2, 1])  # transpose to get the correct format
+    # voice_A = mask(voice_A, seq_len, mode='add')  # shape: (batch, max_length, max_length)
+    # voice_A = tf.transpose(voice_A, [0, 2, 1])  # transpose to get the correct format
+    # voice_A = tf.nn.softmax(voice_A)  # shape: (batch, max_length, max_length)
+    # voice_O = tf.matmul(voice_A, word_V)  # shape: (batch, max_length, 200)
+    # voice_O = mask(voice_O, seq_len, mode='mul', max_len=config.max_sent_num)  # shape: (batch, max_sent_num, 200)
 
     O = tf.concat([voice_O, word_V], axis=-1)
-    O = tf.layers.dropout(O, rate=config.drop_rate-0.2, training=is_training)   # shape: (batch, max_sent_num, 400)
+    O = tf.layers.dropout(O, rate=config.drop_rate-0.3, training=is_training)   # shape: (batch, max_sent_num, 400)
 
-    #######   sent rnn   #######
+    #### sent RNN ####
     with tf.variable_scope("sent_classify_lstm"):
         lstm_fw_cells = tf.nn.rnn_cell.LSTMCell(num_units=100, use_peepholes=True)
         lstm_bw_cells = tf.nn.rnn_cell.LSTMCell(num_units=100, use_peepholes=True)
@@ -167,7 +181,9 @@ def train_attention(config):
                                   transpose_b=True)  # [batch, max_length, max_length]
     constraint_mask = constraint_mask_1 * constraint_mask_2
     # care about the attentions
-    attention_loss = voice_A ** 2 * constraint_mask  # [batch, max_length, max_length]
+    attention_loss = 0
+    for att in voice_A:
+        attention_loss += att ** 2 * constraint_mask  # [batch, max_length, max_length]
     attention_loss = tf.reduce_sum(attention_loss, axis=[1, 2])  # [batch]
 
     loss = loss + config.alpha * attention_loss
@@ -337,81 +353,15 @@ def train_attention(config):
                 else:
                     flag = True
                     if (iter + 1) % config.lr_decay_step_force == 0:
-                        lr_factor /= 1.5  # lr decay
+                        lr_factor /= 1.7  # lr decay
                         print("learning rate is decayed! current lr : ", config.lr * lr_factor)
                         write_log("learning rate is decayed! current lr : {}".format(config.lr * lr_factor))
 
             if (iter + 1) % config.model_save_step == 0:
                 saver.save(sess, os.path.join(config.model_path, "./Check_Point/model.ckpt"),
                            global_step=iter // config.model_save_step)
-                print("{}th model is saved, in setp {}!".format(((iter+1)//config.model_save_step)-1, iter+1))
-                write_log("{}th model is saved, in setp {}!".format(((iter+1)//config.model_save_step)-1, iter+1))
-
-                all_test_zhikang_dataset = tf.data.TFRecordDataset(
-                    [os.path.join(test_zhikang_root, x) for x in os.listdir(test_zhikang_root)])
-                all_parsed_test_zhikang = all_test_zhikang_dataset.map(parse_helper)
-                all_parsed_test_zhikang = all_parsed_test_zhikang.apply(
-                    tf.contrib.data.padded_batch_and_drop_remainder(
-                        batch_size=config.batch_size, padded_shapes=(
-                            [config.max_sent_num, 64], [config.max_sent_num, config.max_sent_len],
-                            [config.max_sent_num], [config.max_sent_num], []
-                        )))
-                all_test_zhikang_iter = all_parsed_test_zhikang.make_one_shot_iterator()
-                all_test_zhikang_next = all_test_zhikang_iter.get_next()
-
-                cnt = 0
-                acc_sum = 0
-                while True:
-                    try:
-                        pred_voice_embed, pred_word_idx, pred_sent_len, true_label, pred_seq_len = sess.run(
-                            all_test_zhikang_next)
-                    except tf.errors.OutOfRangeError:
-                        break
-                    acc = sess.run(accuracy, feed_dict={voice_embed: pred_voice_embed,
-                                                        word_idx: pred_word_idx,
-                                                        sent_len: pred_sent_len,
-                                                        seq_len: pred_seq_len,
-                                                        label: true_label,
-                                                        is_training: False})
-                    cnt += 1
-                    acc_sum += acc
-
-                acc_mean = acc_sum / cnt
-                print("zhikang test acc in {} steps is {}".format(iter + 1, acc_mean))
-                write_log("zhikang test acc in {} steps is {}".format(iter + 1, acc_mean))
-
-                all_test_dahai_dataset = tf.data.TFRecordDataset(
-                    [os.path.join(test_dahai_root, x) for x in os.listdir(test_dahai_root)])
-                all_parsed_test_dahai = all_test_dahai_dataset.map(parse_helper)
-                all_parsed_test_dahai = all_parsed_test_dahai.apply(
-                    tf.contrib.data.padded_batch_and_drop_remainder(
-                        batch_size=config.batch_size, padded_shapes=(
-                            [config.max_sent_num, 64], [config.max_sent_num, config.max_sent_len],
-                            [config.max_sent_num], [config.max_sent_num], []
-                        )))
-                all_test_dahai_iter = all_parsed_test_dahai.make_one_shot_iterator()
-                all_test_dahai_next = all_test_dahai_iter.get_next()
-
-                cnt = 0
-                acc_sum = 0
-                while True:
-                    try:
-                        pred_voice_embed, pred_word_idx, pred_sent_len, true_label, pred_seq_len = sess.run(
-                            all_test_dahai_next)
-                    except tf.errors.OutOfRangeError:
-                        break
-                    acc = sess.run(accuracy, feed_dict={voice_embed: pred_voice_embed,
-                                                        word_idx: pred_word_idx,
-                                                        sent_len: pred_sent_len,
-                                                        seq_len: pred_seq_len,
-                                                        label: true_label,
-                                                        is_training: False})
-                    cnt += 1
-                    acc_sum += acc
-
-                acc_mean = acc_sum / cnt
-                print("dahai test acc in {} steps is {}".format(iter + 1, acc_mean))
-                write_log("dahai test acc in {} steps is {}".format(iter + 1, acc_mean))
+                print("model is saved!")
+                write_log("model is saved!")
 
 
 class configuration(object):
@@ -443,29 +393,62 @@ def write_log(message):
         f.write(message + "\n")
 
 
+def transformer_encode(enc, config, training=True):
+    '''
+    Returns
+    memory: encoder outputs. (N, T1, d_model)
+    '''
+    with tf.variable_scope("Transformer", reuse=tf.AUTO_REUSE):
+
+        # embedding
+        enc *= config.d_model**0.5 # scale
+
+        enc += positional_encoding(enc, config.max_sent_num)
+        enc = tf.layers.dropout(enc, config.drop_rate, training=training)
+
+        ## Blocks
+        for i in range(config.num_blocks):
+            with tf.variable_scope("num_blocks_{}".format(i), reuse=tf.AUTO_REUSE):
+                # self-attention
+                enc = multihead_attention(queries=enc,
+                                          keys=enc,
+                                          values=enc,
+                                          num_heads=config.num_heads,
+                                          dropout_rate=config.drop_rate,
+                                          training=training,
+                                          causality=False)
+                # feed forward
+                enc = ff(enc, num_units=[config.d_ff, config.d_model])
+    memory = enc
+    return memory
+
+
 
 
 if __name__ == "__main__":
     config = configuration()
     config.batch_size = 64
     config.optim = 'adam'
-    config.iteration = 50000
-    config.lr = 1e-2
+    config.iteration = 100000
+    config.lr = 1e-4
     config.drop_rate = 0.5
-    config.model_name = "pure_sentrnn_for_compare_with_postag_layernorm"
+    config.model_name = "multihead_4_e-4_drop7_l2"
     config.model_path = '/workspace/speaker_verification/{}/'.format(config.model_name)
     config.train_log = os.path.join(config.model_path, "train.log")
-    config.lr_decay_step = 2000
-    config.lr_decay_step_force = 10000
+    config.lr_decay_step = 5000
+    config.lr_decay_step_force = 15000
     config.model_save_step = 1000
     config.alpha = 10
     config.max_sent_num = 200
     config.max_sent_len = 100
     config.w2v_dim = 200
     config.vocab_size = 314041
-    config.tags_size = 198
     config.w2v_istrain = True
 
+    config.va_d_ff = 64
+    config.va_d_model = 64
+    config.va_num_heads = 4
+    config.va_drop_rate = 0.7
 
     config.l2_reg_lambda = 1e-4
 

@@ -353,7 +353,7 @@ def gated_cnn_layer(inputs, filter_width, output_dim, layer_num):
     # inputs = tf.convert_to_tensor(inputs)
     shape_input = inputs.get_shape().as_list()
 
-    paddings = [[0, 0], [0, filter_width - 1], [0, 0]]
+    paddings = [[0, 0], [filter_width - 1, 0], [0, 0]]
     inputs = tf.pad(inputs, paddings, "CONSTANT")
     inputs = tf.expand_dims(inputs, axis=3)
 
@@ -377,9 +377,9 @@ if __name__ == "__main__":
     config.batch_size = 64
     config.optim = 'rmsprop'
     config.iteration = 50000
-    config.lr = 1e-2
+    config.lr = 1e-3
     config.drop_rate = 0.5
-    config.model_name = "cnn_3_512_345"
+    config.model_name = "gcnn_e-3_3_256128128_345"
     config.model_path = '/workspace/speaker_verification/{}/'.format(config.model_name)
     config.train_log = os.path.join(config.model_path, "train.log")
     config.lr_decay_step = 50000
@@ -393,7 +393,9 @@ if __name__ == "__main__":
 
     config.filter_widths = [3, 4, 5]
     config.cnn_layers = 3
-    config.cnn_dims = [512, 512, 512]
+    config.cnn_dims = [256, 128, 128]
+
+    assert len(config.filter_widths) == len(config.cnn_dims) == config.cnn_layers
 
 
     os.makedirs(os.path.join(config.model_path, "Check_Point"), exist_ok=True)  # make folder to save model

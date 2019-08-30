@@ -197,7 +197,7 @@ def multihead_attention(queries, keys, values,
         outputs += queries
               
         # Normalize
-        outputs = ln(outputs)
+        # outputs = ln(outputs)
  
     return outputs
 
@@ -222,7 +222,7 @@ def ff(inputs, num_units, scope="positionwise_feedforward"):
         outputs += inputs
         
         # Normalize
-        outputs = ln(outputs)
+        # outputs = ln(outputs)
     
     return outputs
 

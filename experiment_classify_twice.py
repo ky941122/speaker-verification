@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Date   : 2019-07-26
+# @Date   : 2019-08-09
 # @Author : KangYu
-# @File   : experiment_sentRNN.py
+# @File   : experiment_classify_twice.py
+
 
 import re
 import os
@@ -105,21 +106,88 @@ def train_attention(config):
     lr = tf.placeholder(dtype=tf.float32)  # learning rate
     global_step = tf.Variable(0, name='global_step', trainable=False)
 
-    voice_Q = tf.layers.dense(inputs=voice_embed, units=32, activation=None, use_bias=False,
-                              kernel_initializer=tf.truncated_normal_initializer(), name='attention_w')
-    voice_K = tf.layers.dense(inputs=voice_embed, units=32, activation=None, use_bias=False,
-                              name='attention_w', reuse=True)
-    word_V = word_embed  # shape: (batch, max_length, 200)
-    voice_A = tf.matmul(voice_Q, voice_K, transpose_b=True)  # shape: (batch, max_length, max_length)
-    voice_A = tf.transpose(voice_A, [0, 2, 1])  # transpose to get the correct format
-    voice_A = mask(voice_A, seq_len, mode='add')  # shape: (batch, max_length, max_length)
-    voice_A = tf.transpose(voice_A, [0, 2, 1])  # transpose to get the correct format
-    voice_A = tf.nn.softmax(voice_A)  # shape: (batch, max_length, max_length)
-    voice_O = tf.matmul(voice_A, word_V)  # shape: (batch, max_length, 200)
-    voice_O = mask(voice_O, seq_len, mode='mul', max_len=config.max_sent_num)  # shape: (batch, max_sent_num, 200)
+    #######      first classification -- predict groups     ########
 
-    O = tf.concat([voice_O, word_V], axis=-1)
-    O = tf.layers.dropout(O, rate=config.drop_rate-0.2, training=is_training)   # shape: (batch, max_sent_num, 400)
+    group_logits = []
+    voice_embed_1 = voice_embed
+    for i in range(config.max_sent_num):
+        voice_embed_2_1 = voice_embed[:, i:, :]  # [batch, max_sent_nums-i, 64]
+        voice_embed_2_2 = voice_embed[:, :i, :]
+        voice_embed_2 = tf.concat([voice_embed_2_1, voice_embed_2_2], axis=1)
+        voice_concat = tf.concat([voice_embed_1, voice_embed_2], axis=-1)
+        group_dense_1 = tf.layers.dense(inputs=voice_concat, units=256, activation=None,
+                                      kernel_initializer=tf.truncated_normal_initializer(),
+                                      bias_initializer=tf.constant_initializer(0.1), reuse=tf.AUTO_REUSE,
+                                      name="group_den_1")
+        group_logit = tf.layers.dense(inputs=group_dense_1, units=2, activation=None,
+                                      kernel_initializer=tf.truncated_normal_initializer(),
+                                      bias_initializer=tf.constant_initializer(0.1), reuse=tf.AUTO_REUSE,
+                                      name="group_prediction")  # [batch, 200, 2]
+        group_logit = tf.expand_dims(group_logit, axis=1)  # [batch, 1, max_sent_nums, 2]
+        group_logits.append(group_logit)
+
+    print("voice_embed_2.shape:", voice_embed_2.shape)
+    write_log("voice_embed_2.shape: {}".format(voice_embed_2.shape))
+    group_logits = tf.concat(group_logits, axis=1)  # [batch, max_sent_nums, max_sent_nums, 2]
+    print("group_logits.shape:", group_logits.shape)
+    write_log("group_logits.shape: {}".format(group_logits.shape))
+
+    ##### group labels #####
+
+    temp_label_group = tf.expand_dims(label, axis=-1)
+    temp_label_group = tf.matmul(1 - temp_label_group, temp_label_group, transpose_b=True) + \
+                       tf.matmul(temp_label_group, 1 - temp_label_group, transpose_b=True)
+
+    group_label = tf.cast(tf.equal(temp_label_group, 0), tf.int32)
+
+    # mask_group: 一个样本内部200句话，两两匹配时真实有效的匹配对，即匹配双方都不是padding.
+    mask_group = tf.cast(tf.sequence_mask(seq_len, config.max_sent_num), tf.float32)
+
+    mask_group = tf.expand_dims(mask_group, axis=-1)  # [batch, max_sent_nums, 1]
+    mask_group = tf.matmul(mask_group, mask_group,
+                           transpose_b=True)  # [batch, max_sent_nums, max_sent_nums]
+    group_label = group_label * tf.cast(mask_group, tf.int32)  # [batch, max_sent_nums, max_sent_nums]
+
+    group_balance_mask_0 = tf.cast(tf.equal(label, 0), tf.float32) * 2
+    group_balance_mask_1 = tf.cast(tf.equal(label, 1), tf.float32) * 1
+    group_balance_mask = group_balance_mask_0 + group_balance_mask_1
+    group_balance_mask = mask_group * tf.expand_dims(group_balance_mask, axis=-1)   # [batch, max_sent_nums, max_sent_nums]
+
+    ########################
+
+    group_classify_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=group_label, logits=group_logits,
+                                                                         name="group_classify_loss")  # [batch, max_sent_nums, max_sent_nums]
+    group_classify_loss = group_classify_loss * mask_group * group_balance_mask
+    group_classify_loss = tf.reduce_sum(group_classify_loss) / tf.reduce_sum(mask_group)
+
+    group_loss_summary = tf.summary.scalar("group_loss", group_classify_loss)
+
+    predict_group = tf.cast(tf.argmax(group_logits, -1), tf.float32)  # [batch, max_sent_nums, max_sent_nums]
+    predict_group = predict_group * mask_group
+
+    predict_group_label = tf.cast(predict_group, tf.int32)
+    correct_label_nums = predict_group_label * group_label
+    group_accuracy = tf.cast(tf.reduce_sum(correct_label_nums), tf.float32) / tf.cast(tf.reduce_sum(mask_group),
+                                                                           tf.float32)
+
+    group_acc_summary = tf.summary.scalar("group_accuracy", group_accuracy)
+
+    ###### count mean of each group #####
+
+    word_embed2 = tf.matmul(predict_group, word_embed)
+
+    class_cnt = tf.reduce_sum(predict_group, axis=-1)
+    class_cnt = class_cnt + tf.cast(tf.equal(class_cnt, 0), tf.float32)
+    class_cnt = tf.expand_dims(class_cnt, axis=-1)
+
+    word_embed2 = word_embed2 / class_cnt
+
+    #####################################
+
+    ###############################################################
+
+    O = tf.concat([word_embed, word_embed2], axis=-1)
+    O = tf.layers.dropout(O, rate=config.drop_rate - 0.2, training=is_training)
 
     #######   sent rnn   #######
     with tf.variable_scope("sent_classify_lstm"):
@@ -157,22 +225,9 @@ def train_attention(config):
     loss = loss * balance_mask
     loss = tf.reduce_sum(loss, axis=1)  # shape: (batch)
 
-    temp_label = tf.expand_dims(label, -1)  # [batch, max_length, 1]
-    temp_label = tf.matmul(1 - temp_label, temp_label, transpose_b=True) + tf.matmul(temp_label, 1 - temp_label,
-                                                                                     transpose_b=True)  # [batch, max_len, max_len]
-    constraint_mask_1 = tf.cast(tf.equal(temp_label, 1), tf.float32)  # [batch, max_len, max_len]
-    constraint_mask_2 = tf.cast(tf.sequence_mask(seq_len, config.max_sent_num), tf.float32)  # [batch, max_length]
-    constraint_mask_2 = tf.expand_dims(constraint_mask_2, -1)  # [batch, max_length, 1]
-    constraint_mask_2 = tf.matmul(constraint_mask_2, constraint_mask_2,
-                                  transpose_b=True)  # [batch, max_length, max_length]
-    constraint_mask = constraint_mask_1 * constraint_mask_2
-    # care about the attentions
-    attention_loss = voice_A ** 2 * constraint_mask  # [batch, max_length, max_length]
-    attention_loss = tf.reduce_sum(attention_loss, axis=[1, 2])  # [batch]
-
-    loss = loss + config.alpha * attention_loss
-
     loss = tf.reduce_mean(loss / tf.cast(tf.reduce_sum(balance_mask, axis=1), dtype=tf.float32))
+
+    loss = loss + config.alpha * group_classify_loss
 
     l2_loss = tf.constant(0.0)
     for para in tf.trainable_variables():
@@ -209,12 +264,12 @@ def train_attention(config):
     loss_summary = tf.summary.scalar("Loss", loss)
     acc_summary = tf.summary.scalar("Accuracy", accuracy)
     base_acc_summary = tf.summary.scalar("Base_Accuracy", base_acc)
-    merge_summary = tf.summary.merge([loss_summary, acc_summary, base_acc_summary])
+    merge_summary = tf.summary.merge([loss_summary, acc_summary, base_acc_summary, group_acc_summary, group_loss_summary])
 
-    w2v_np = np.load('/workspace/speaker_verification/data/w2v_online/0718_dahaipretrain/w2v_mtrx.npy')
+    w2v_np = np.load('/share/kangyu/speaker/w2v_mtrx.npy')
     w2v_np = np.concatenate([np.array([[0.0] * config.w2v_dim]), w2v_np], axis=0)
 
-    train_root = '/workspace/speaker_verification/data/dahai/train/va_widxdahai_tfrecord_200_100/'
+    train_root = '/share/kangyu/speaker/dahai/train/va_widxdahai_tfrecord_200_100/'
     train_dataset = tf.data.TFRecordDataset([os.path.join(train_root, x) for x in os.listdir(train_root)])
     parsed_train = train_dataset.map(parse_helper)
     parsed_train = parsed_train.shuffle(10000)
@@ -227,7 +282,7 @@ def train_attention(config):
     train_iter = parsed_train.make_one_shot_iterator()
     train_next = train_iter.get_next()
 
-    test_zhikang_root = '/workspace/speaker_verification/data/zhikang/test/va_widxdahai_tfrecord_200_200'
+    test_zhikang_root = '/share/kangyu/speaker/zhikang/test/va_widxdahai_tfrecord_200_200'
     test_zhikang_dataset = tf.data.TFRecordDataset(
         [os.path.join(test_zhikang_root, x) for x in os.listdir(test_zhikang_root)])
     parsed_test_zhikang = test_zhikang_dataset.map(parse_helper)
@@ -241,7 +296,7 @@ def train_attention(config):
     test_zhikang_iter = parsed_test_zhikang.make_one_shot_iterator()
     test_zhikang_next = test_zhikang_iter.get_next()
 
-    test_dahai_root = '/workspace/speaker_verification/data/dahai/test/va_widxdahai_tfrecord_200_200'
+    test_dahai_root = '/share/kangyu/speaker/dahai/test/va_widxdahai_tfrecord_200_200'
     test_dahai_dataset = tf.data.TFRecordDataset(
         [os.path.join(test_dahai_root, x) for x in os.listdir(test_dahai_root)])
     parsed_test_dahai = test_dahai_dataset.map(parse_helper)
@@ -259,6 +314,19 @@ def train_attention(config):
         tf.global_variables_initializer().run()
         # also initialize the embedding weight
         sess.run(embedding_init, feed_dict={embedding_placeholder: w2v_np})
+
+        variables = tf.contrib.framework.get_variables_to_restore()
+        variables_to_resotre = [v for v in variables if "Adam" not in v.name and (v.name.split('/')[0] == 'sent_classify_lstm' or "dense" in v.name.split('/')[0])]
+        print("variables_to_resotre:\n", variables_to_resotre)
+        write_log("variables_to_resotre:\n")
+        for v in variables_to_resotre:
+            write_log(str(v) + "\n")
+
+        # saver = tf.train.Saver(variables_to_resotre)
+        # saver.restore(sess, config.ckpt_path)
+        # print("*" * 20 + "\nReading model parameters from %s \n" % config.ckpt_path + "*" * 20)
+        # write_log("*" * 20 + "\nReading model parameters from %s \n" % config.ckpt_path + "*" * 20)
+
         saver = tf.train.Saver(max_to_keep=10000)
 
         train_writer = tf.summary.FileWriter(os.path.join(config.model_path, "logs/train"), sess.graph)
@@ -267,6 +335,7 @@ def train_attention(config):
         lr_factor = 1  # lr decay factor ( 1/2 per 10000 iteration)
         loss_acc, test_loss_acc, test_loss_acc_2 = 0, 0, 0
         acc_acc, test_acc_acc, test_acc_acc_2 = 0, 0, 0
+        group_acc, test_group_acc, test_group_acc_2 = 0, 0, 0
         base_acc_acc, test_base_acc_acc, test_base_acc_acc_2 = 0, 0, 0
 
         min_loss = 99999999
@@ -280,16 +349,16 @@ def train_attention(config):
             test_voice_embed_2, test_word_idx_2, test_sent_len_2, test_label_2, test_seq_len_2 = sess.run(
                 test_dahai_next)
 
-            _, loss_cur, train_summary, acc_cur, base_acc_cur = sess.run(
-                [train_op, loss, merge_summary, accuracy, base_acc],
+            _, loss_cur, train_summary, acc_cur, base_acc_cur, group_acc_cur = sess.run(
+                [train_op, loss, merge_summary, accuracy, base_acc, group_accuracy],
                 feed_dict={voice_embed: train_voice_embed, word_idx: train_word_idx, sent_len: train_sent_len,
                            label: train_label, seq_len: train_seq_len, lr: config.lr * lr_factor, is_training: True})
-            test_loss_cur, test_summary, test_acc_cur, test_base_acc_cur = sess.run(
-                [loss, merge_summary, accuracy, base_acc],
+            test_loss_cur, test_summary, test_acc_cur, test_base_acc_cur, test_group_acc_cur = sess.run(
+                [loss, merge_summary, accuracy, base_acc, group_accuracy],
                 feed_dict={voice_embed: test_voice_embed, word_idx: test_word_idx, sent_len: test_sent_len,
                            label: test_label, seq_len: test_seq_len, is_training: False})
-            test_loss_cur_2, test_summary_2, test_acc_cur_2, test_base_acc_cur_2 = sess.run(
-                [loss, merge_summary, accuracy, base_acc],
+            test_loss_cur_2, test_summary_2, test_acc_cur_2, test_base_acc_cur_2, test_group_acc_cur_2 = sess.run(
+                [loss, merge_summary, accuracy, base_acc, group_accuracy],
                 feed_dict={voice_embed: test_voice_embed_2, word_idx: test_word_idx_2, sent_len: test_sent_len_2,
                            label: test_label_2, seq_len: test_seq_len_2, is_training: False})
             loss_acc += loss_cur  # accumulated loss for each 100 iteration
@@ -302,6 +371,10 @@ def train_attention(config):
             test_base_acc_acc += test_base_acc_cur
             test_base_acc_acc_2 += test_base_acc_cur_2
 
+            group_acc += group_acc_cur
+            test_group_acc += test_group_acc_cur
+            test_group_acc_2 += test_group_acc_cur_2
+
             if iter % 10 == 0:
                 train_writer.add_summary(train_summary, iter)  # write at tensorboard
                 test_writer.add_summary(test_summary, iter)
@@ -313,11 +386,13 @@ def train_attention(config):
                         (iter + 1), loss_acc / 100, acc_acc / 100, base_acc_acc / 100, test_loss_acc / 100,
                         test_acc_acc / 100, test_base_acc_acc / 100, test_loss_acc_2 / 100, test_acc_acc_2 / 100,
                         test_base_acc_acc_2 / 100))
+                print("(iter : {})\ntrain_group_acc: {}/dahai_test_group_acc: {}/zhikang_test_group_acc: {}".format(iter+1, group_acc/100, test_group_acc_2/100, test_group_acc/100))
                 write_log(
                     "(iter : %d)\ntrain_loss: %.4f/train_acc: %.4f/base_acc: %.4f\ntest_zhikang_loss: %.4f/test_zhikang_acc: %.4f/base_acc: %.4f\ntest_dahai_loss: %.4f/test_dahai_acc: %.4f/base_acc: %.4f" % (
                         (iter + 1), loss_acc / 100, acc_acc / 100, base_acc_acc / 100, test_loss_acc / 100,
                         test_acc_acc / 100, test_base_acc_acc / 100, test_loss_acc_2 / 100, test_acc_acc_2 / 100,
                         test_base_acc_acc_2 / 100))
+                write_log("(iter : {})\ntrain_group_acc: {}/dahai_test_group_acc: {}/zhikang_test_group_acc: {}".format(iter+1, group_acc/100, test_group_acc_2/100, test_group_acc/100))
 
                 cur_loss = loss_acc / 100
                 cur_acc = acc_acc / 100
@@ -327,6 +402,7 @@ def train_attention(config):
 
                 loss_acc, test_loss_acc, test_loss_acc_2 = 0, 0, 0
                 acc_acc, test_acc_acc, test_acc_acc_2 = 0, 0, 0
+                group_acc, test_group_acc, test_group_acc_2 = 0, 0, 0
                 base_acc_acc, test_base_acc_acc, test_base_acc_acc_2 = 0, 0, 0
 
             if (iter + 1) % config.lr_decay_step == 0:
@@ -344,8 +420,8 @@ def train_attention(config):
             if (iter + 1) % config.model_save_step == 0:
                 saver.save(sess, os.path.join(config.model_path, "./Check_Point/model.ckpt"),
                            global_step=iter // config.model_save_step)
-                print("{}th model is saved, in setp {}!".format(((iter+1)//config.model_save_step)-1, iter+1))
-                write_log("{}th model is saved, in setp {}!".format(((iter+1)//config.model_save_step)-1, iter+1))
+                print("model is saved!")
+                write_log("model is saved!")
 
                 all_test_zhikang_dataset = tf.data.TFRecordDataset(
                     [os.path.join(test_zhikang_root, x) for x in os.listdir(test_zhikang_root)])
@@ -448,17 +524,17 @@ def write_log(message):
 if __name__ == "__main__":
     config = configuration()
     config.batch_size = 64
-    config.optim = 'adam'
-    config.iteration = 50000
+    config.optim = 'rmsprop'
+    config.iteration = 100000
     config.lr = 1e-2
     config.drop_rate = 0.5
-    config.model_name = "pure_sentrnn_for_compare_with_postag_layernorm"
+    config.model_name = "classify_twice_balance_big_alpha"
     config.model_path = '/workspace/speaker_verification/{}/'.format(config.model_name)
     config.train_log = os.path.join(config.model_path, "train.log")
-    config.lr_decay_step = 2000
+    config.lr_decay_step = 5000
     config.lr_decay_step_force = 10000
-    config.model_save_step = 1000
-    config.alpha = 10
+    config.model_save_step = 2000
+    config.alpha = 20
     config.max_sent_num = 200
     config.max_sent_len = 100
     config.w2v_dim = 200
@@ -466,7 +542,7 @@ if __name__ == "__main__":
     config.tags_size = 198
     config.w2v_istrain = True
 
-
+    config.ckpt_path = "/workspace/speaker_verification/pretrain_e-2_100_concat_equal_prob/Check_Point/model.ckpt-56"
     config.l2_reg_lambda = 1e-4
 
 

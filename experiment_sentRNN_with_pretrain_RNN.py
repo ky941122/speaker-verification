@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Date   : 2019-07-26
+# @Date   : 2019-08-05
 # @Author : KangYu
-# @File   : experiment_sentRNN.py
+# @File   : experiment_sentRNN_with_pretrain_RNN.py
+
 
 import re
 import os
@@ -118,8 +119,10 @@ def train_attention(config):
     voice_O = tf.matmul(voice_A, word_V)  # shape: (batch, max_length, 200)
     voice_O = mask(voice_O, seq_len, mode='mul', max_len=config.max_sent_num)  # shape: (batch, max_sent_num, 200)
 
-    O = tf.concat([voice_O, word_V], axis=-1)
-    O = tf.layers.dropout(O, rate=config.drop_rate-0.2, training=is_training)   # shape: (batch, max_sent_num, 400)
+    O = tf.concat([word_V, voice_O], axis=-1)
+    # O = tf.layers.dropout(O, rate=config.drop_rate-0.2, training=is_training)   # shape: (batch, max_sent_num, 400)
+    # O = voice_O + word_V
+    O = tf.layers.dropout(O, rate=config.drop_rate - 0.2, training=is_training)
 
     #######   sent rnn   #######
     with tf.variable_scope("sent_classify_lstm"):
@@ -130,6 +133,7 @@ def train_attention(config):
                                                              time_major=False, dtype=tf.float32,
                                                              sequence_length=seq_len)
         sent_O = tf.concat(series_outputs, -1)  # [batch_size, max_sent_num, series_hidden*2]
+        # sent_O = layer_norm(sent_O)
         sent_O = tf.layers.dropout(sent_O, rate=config.drop_rate, training=is_training)
     ##########################
 
@@ -211,10 +215,10 @@ def train_attention(config):
     base_acc_summary = tf.summary.scalar("Base_Accuracy", base_acc)
     merge_summary = tf.summary.merge([loss_summary, acc_summary, base_acc_summary])
 
-    w2v_np = np.load('/workspace/speaker_verification/data/w2v_online/0718_dahaipretrain/w2v_mtrx.npy')
+    w2v_np = np.load('/share/kangyu/speaker/w2v_mtrx.npy')
     w2v_np = np.concatenate([np.array([[0.0] * config.w2v_dim]), w2v_np], axis=0)
 
-    train_root = '/workspace/speaker_verification/data/dahai/train/va_widxdahai_tfrecord_200_100/'
+    train_root = '/share/kangyu/speaker/dahai/train/va_widxdahai_tfrecord_200_100/'
     train_dataset = tf.data.TFRecordDataset([os.path.join(train_root, x) for x in os.listdir(train_root)])
     parsed_train = train_dataset.map(parse_helper)
     parsed_train = parsed_train.shuffle(10000)
@@ -227,7 +231,7 @@ def train_attention(config):
     train_iter = parsed_train.make_one_shot_iterator()
     train_next = train_iter.get_next()
 
-    test_zhikang_root = '/workspace/speaker_verification/data/zhikang/test/va_widxdahai_tfrecord_200_200'
+    test_zhikang_root = '/share/kangyu/speaker/zhikang/test/va_widxdahai_tfrecord_200_200'
     test_zhikang_dataset = tf.data.TFRecordDataset(
         [os.path.join(test_zhikang_root, x) for x in os.listdir(test_zhikang_root)])
     parsed_test_zhikang = test_zhikang_dataset.map(parse_helper)
@@ -241,7 +245,7 @@ def train_attention(config):
     test_zhikang_iter = parsed_test_zhikang.make_one_shot_iterator()
     test_zhikang_next = test_zhikang_iter.get_next()
 
-    test_dahai_root = '/workspace/speaker_verification/data/dahai/test/va_widxdahai_tfrecord_200_200'
+    test_dahai_root = '/share/kangyu/speaker/dahai/test/va_widxdahai_tfrecord_200_200'
     test_dahai_dataset = tf.data.TFRecordDataset(
         [os.path.join(test_dahai_root, x) for x in os.listdir(test_dahai_root)])
     parsed_test_dahai = test_dahai_dataset.map(parse_helper)
@@ -259,6 +263,19 @@ def train_attention(config):
         tf.global_variables_initializer().run()
         # also initialize the embedding weight
         sess.run(embedding_init, feed_dict={embedding_placeholder: w2v_np})
+
+        variables = tf.contrib.framework.get_variables_to_restore()
+        variables_to_resotre = [v for v in variables if "Adam" not in v.name and (v.name.split('/')[0] == 'sent_classify_lstm' or "dense" in v.name.split('/')[0])]
+        print("variables_to_resotre:\n", variables_to_resotre)
+        write_log("variables_to_resotre:\n")
+        for v in variables_to_resotre:
+            write_log(str(v) + "\n")
+
+        saver = tf.train.Saver(variables_to_resotre)
+        saver.restore(sess, config.ckpt_path)
+        print("*" * 20 + "\nReading model parameters from %s \n" % config.ckpt_path + "*" * 20)
+        write_log("*" * 20 + "\nReading model parameters from %s \n" % config.ckpt_path + "*" * 20)
+
         saver = tf.train.Saver(max_to_keep=10000)
 
         train_writer = tf.summary.FileWriter(os.path.join(config.model_path, "logs/train"), sess.graph)
@@ -344,8 +361,8 @@ def train_attention(config):
             if (iter + 1) % config.model_save_step == 0:
                 saver.save(sess, os.path.join(config.model_path, "./Check_Point/model.ckpt"),
                            global_step=iter // config.model_save_step)
-                print("{}th model is saved, in setp {}!".format(((iter+1)//config.model_save_step)-1, iter+1))
-                write_log("{}th model is saved, in setp {}!".format(((iter+1)//config.model_save_step)-1, iter+1))
+                print("model is saved!")
+                write_log("model is saved!")
 
                 all_test_zhikang_dataset = tf.data.TFRecordDataset(
                     [os.path.join(test_zhikang_root, x) for x in os.listdir(test_zhikang_root)])
@@ -444,20 +461,45 @@ def write_log(message):
 
 
 
+def layer_norm(inputs, epsilon=1e-8, scope="layer_norm"):
+    '''Applies layer normalization. See https://arxiv.org/abs/1607.06450.
+    inputs: A tensor with 2 or more dimensions, where the first dimension has `batch_size`.
+    epsilon: A floating number. A very small number for preventing ZeroDivision Error.
+    scope: Optional scope for `variable_scope`.
+
+    Returns:
+      A tensor with the same shape and data dtype as `inputs`.
+    '''
+    with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
+        inputs_shape = inputs.get_shape()
+        params_shape = inputs_shape[-1:]
+
+        mean, variance = tf.nn.moments(inputs, [-1], keep_dims=True)
+        beta = tf.get_variable("beta", params_shape, initializer=tf.zeros_initializer())
+        gamma = tf.get_variable("gamma", params_shape, initializer=tf.ones_initializer())
+        normalized = (inputs - mean) / ((variance + epsilon) ** (.5))
+        outputs = gamma * normalized + beta
+
+    return outputs
+
+
+
+
+
 
 if __name__ == "__main__":
     config = configuration()
     config.batch_size = 64
     config.optim = 'adam'
     config.iteration = 50000
-    config.lr = 1e-2
+    config.lr = 1e-4
     config.drop_rate = 0.5
-    config.model_name = "pure_sentrnn_for_compare_with_postag_layernorm"
+    config.model_name = "sentRNN_with_pretrain_all_equal_prob_3"
     config.model_path = '/workspace/speaker_verification/{}/'.format(config.model_name)
     config.train_log = os.path.join(config.model_path, "train.log")
-    config.lr_decay_step = 2000
-    config.lr_decay_step_force = 10000
-    config.model_save_step = 1000
+    config.lr_decay_step = 5000
+    config.lr_decay_step_force = 20000
+    config.model_save_step = 2000
     config.alpha = 10
     config.max_sent_num = 200
     config.max_sent_len = 100
@@ -466,7 +508,7 @@ if __name__ == "__main__":
     config.tags_size = 198
     config.w2v_istrain = True
 
-
+    config.ckpt_path = "/workspace/speaker_verification/pretrain_e-2_100_concat_equal_prob/Check_Point/model.ckpt-29"
     config.l2_reg_lambda = 1e-4
 
 

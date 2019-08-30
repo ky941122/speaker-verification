@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Date   : 2019-07-26
+# @Date   : 2019-08-13
 # @Author : KangYu
-# @File   : experiment_sentRNN.py
+# @File   : experiment_nni.py
 
 import re
 import os
@@ -123,8 +123,8 @@ def train_attention(config):
 
     #######   sent rnn   #######
     with tf.variable_scope("sent_classify_lstm"):
-        lstm_fw_cells = tf.nn.rnn_cell.LSTMCell(num_units=100, use_peepholes=True)
-        lstm_bw_cells = tf.nn.rnn_cell.LSTMCell(num_units=100, use_peepholes=True)
+        lstm_fw_cells = tf.nn.rnn_cell.LSTMCell(num_units=config.rnn_dim, use_peepholes=True)
+        lstm_bw_cells = tf.nn.rnn_cell.LSTMCell(num_units=config.rnn_dim, use_peepholes=True)
 
         series_outputs, _b = tf.nn.bidirectional_dynamic_rnn(cell_fw=lstm_fw_cells, cell_bw=lstm_bw_cells, inputs=O,
                                                              time_major=False, dtype=tf.float32,
@@ -319,6 +319,13 @@ def train_attention(config):
                         test_acc_acc / 100, test_base_acc_acc / 100, test_loss_acc_2 / 100, test_acc_acc_2 / 100,
                         test_base_acc_acc_2 / 100))
 
+                train_acc = acc_acc / 100
+                zhikang_acc = test_acc_acc / 100
+                dahai_acc = test_acc_acc_2 / 100
+                """@nni.report_intermediate_result(train_acc)"""
+                """@nni.report_intermediate_result(zhikang_acc)"""
+                """@nni.report_intermediate_result(dahai_acc)"""
+
                 cur_loss = loss_acc / 100
                 cur_acc = acc_acc / 100
                 if cur_loss < min_loss:
@@ -377,6 +384,7 @@ def train_attention(config):
                     acc_sum += acc
 
                 acc_mean = acc_sum / cnt
+                acc_zhikang = acc_mean
                 print("zhikang test acc in {} steps is {}".format(iter + 1, acc_mean))
                 write_log("zhikang test acc in {} steps is {}".format(iter + 1, acc_mean))
 
@@ -410,8 +418,12 @@ def train_attention(config):
                     acc_sum += acc
 
                 acc_mean = acc_sum / cnt
+                acc_dahai = acc_mean
                 print("dahai test acc in {} steps is {}".format(iter + 1, acc_mean))
                 write_log("dahai test acc in {} steps is {}".format(iter + 1, acc_mean))
+
+                """@nni.report_final_result(acc_zhikang)"""
+                """@nni.report_final_result(acc_dahai)"""
 
 
 class configuration(object):
@@ -449,11 +461,13 @@ if __name__ == "__main__":
     config = configuration()
     config.batch_size = 64
     config.optim = 'adam'
-    config.iteration = 50000
+    config.iteration = 20000
+    """@nni.variable(nni.choice(1e-2, 1e-1, 1e-3), name=config.lr)"""
     config.lr = 1e-2
+    """@nni.variable(nni.choice(0.6, 0.5, 0.4, 0.3), name=config.drop_rate)"""
     config.drop_rate = 0.5
-    config.model_name = "pure_sentrnn_for_compare_with_postag_layernorm"
-    config.model_path = '/workspace/speaker_verification/{}/'.format(config.model_name)
+    config.model_name = "nni_experiment"
+    config.model_path = '/workspace/speaker_verification/nni_experiment/{}/'.format(config.model_name)
     config.train_log = os.path.join(config.model_path, "train.log")
     config.lr_decay_step = 2000
     config.lr_decay_step_force = 10000
@@ -468,6 +482,9 @@ if __name__ == "__main__":
 
 
     config.l2_reg_lambda = 1e-4
+
+    """@nni.variable(nni.choice(100, 200, 300), name=config.rnn_dim)"""
+    config.rnn_dim = 100
 
 
     os.makedirs(os.path.join(config.model_path, "Check_Point"), exist_ok=True)  # make folder to save model

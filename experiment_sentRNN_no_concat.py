@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Date   : 2019-07-26
+# @Date   : 2019-08-05
 # @Author : KangYu
-# @File   : experiment_sentRNN.py
+# @File   : experiment_sentRNN_no_concat.py
+
 
 import re
 import os
@@ -118,7 +119,8 @@ def train_attention(config):
     voice_O = tf.matmul(voice_A, word_V)  # shape: (batch, max_length, 200)
     voice_O = mask(voice_O, seq_len, mode='mul', max_len=config.max_sent_num)  # shape: (batch, max_sent_num, 200)
 
-    O = tf.concat([voice_O, word_V], axis=-1)
+    # O = tf.concat([voice_O, word_V], axis=-1)
+    O = voice_O + word_V
     O = tf.layers.dropout(O, rate=config.drop_rate-0.2, training=is_training)   # shape: (batch, max_sent_num, 400)
 
     #######   sent rnn   #######
@@ -130,6 +132,7 @@ def train_attention(config):
                                                              time_major=False, dtype=tf.float32,
                                                              sequence_length=seq_len)
         sent_O = tf.concat(series_outputs, -1)  # [batch_size, max_sent_num, series_hidden*2]
+        # sent_O = layer_norm(sent_O)
         sent_O = tf.layers.dropout(sent_O, rate=config.drop_rate, training=is_training)
     ##########################
 
@@ -211,10 +214,10 @@ def train_attention(config):
     base_acc_summary = tf.summary.scalar("Base_Accuracy", base_acc)
     merge_summary = tf.summary.merge([loss_summary, acc_summary, base_acc_summary])
 
-    w2v_np = np.load('/workspace/speaker_verification/data/w2v_online/0718_dahaipretrain/w2v_mtrx.npy')
+    w2v_np = np.load('/share/kangyu/speaker/w2v_mtrx.npy')
     w2v_np = np.concatenate([np.array([[0.0] * config.w2v_dim]), w2v_np], axis=0)
 
-    train_root = '/workspace/speaker_verification/data/dahai/train/va_widxdahai_tfrecord_200_100/'
+    train_root = '/share/kangyu/speaker/dahai/train/va_widxdahai_tfrecord_200_100/'
     train_dataset = tf.data.TFRecordDataset([os.path.join(train_root, x) for x in os.listdir(train_root)])
     parsed_train = train_dataset.map(parse_helper)
     parsed_train = parsed_train.shuffle(10000)
@@ -227,7 +230,7 @@ def train_attention(config):
     train_iter = parsed_train.make_one_shot_iterator()
     train_next = train_iter.get_next()
 
-    test_zhikang_root = '/workspace/speaker_verification/data/zhikang/test/va_widxdahai_tfrecord_200_200'
+    test_zhikang_root = '/share/kangyu/speaker/zhikang/test/va_widxdahai_tfrecord_200_200'
     test_zhikang_dataset = tf.data.TFRecordDataset(
         [os.path.join(test_zhikang_root, x) for x in os.listdir(test_zhikang_root)])
     parsed_test_zhikang = test_zhikang_dataset.map(parse_helper)
@@ -241,7 +244,7 @@ def train_attention(config):
     test_zhikang_iter = parsed_test_zhikang.make_one_shot_iterator()
     test_zhikang_next = test_zhikang_iter.get_next()
 
-    test_dahai_root = '/workspace/speaker_verification/data/dahai/test/va_widxdahai_tfrecord_200_200'
+    test_dahai_root = '/share/kangyu/speaker/dahai/test/va_widxdahai_tfrecord_200_200'
     test_dahai_dataset = tf.data.TFRecordDataset(
         [os.path.join(test_dahai_root, x) for x in os.listdir(test_dahai_root)])
     parsed_test_dahai = test_dahai_dataset.map(parse_helper)
@@ -344,74 +347,8 @@ def train_attention(config):
             if (iter + 1) % config.model_save_step == 0:
                 saver.save(sess, os.path.join(config.model_path, "./Check_Point/model.ckpt"),
                            global_step=iter // config.model_save_step)
-                print("{}th model is saved, in setp {}!".format(((iter+1)//config.model_save_step)-1, iter+1))
-                write_log("{}th model is saved, in setp {}!".format(((iter+1)//config.model_save_step)-1, iter+1))
-
-                all_test_zhikang_dataset = tf.data.TFRecordDataset(
-                    [os.path.join(test_zhikang_root, x) for x in os.listdir(test_zhikang_root)])
-                all_parsed_test_zhikang = all_test_zhikang_dataset.map(parse_helper)
-                all_parsed_test_zhikang = all_parsed_test_zhikang.apply(
-                    tf.contrib.data.padded_batch_and_drop_remainder(
-                        batch_size=config.batch_size, padded_shapes=(
-                            [config.max_sent_num, 64], [config.max_sent_num, config.max_sent_len],
-                            [config.max_sent_num], [config.max_sent_num], []
-                        )))
-                all_test_zhikang_iter = all_parsed_test_zhikang.make_one_shot_iterator()
-                all_test_zhikang_next = all_test_zhikang_iter.get_next()
-
-                cnt = 0
-                acc_sum = 0
-                while True:
-                    try:
-                        pred_voice_embed, pred_word_idx, pred_sent_len, true_label, pred_seq_len = sess.run(
-                            all_test_zhikang_next)
-                    except tf.errors.OutOfRangeError:
-                        break
-                    acc = sess.run(accuracy, feed_dict={voice_embed: pred_voice_embed,
-                                                        word_idx: pred_word_idx,
-                                                        sent_len: pred_sent_len,
-                                                        seq_len: pred_seq_len,
-                                                        label: true_label,
-                                                        is_training: False})
-                    cnt += 1
-                    acc_sum += acc
-
-                acc_mean = acc_sum / cnt
-                print("zhikang test acc in {} steps is {}".format(iter + 1, acc_mean))
-                write_log("zhikang test acc in {} steps is {}".format(iter + 1, acc_mean))
-
-                all_test_dahai_dataset = tf.data.TFRecordDataset(
-                    [os.path.join(test_dahai_root, x) for x in os.listdir(test_dahai_root)])
-                all_parsed_test_dahai = all_test_dahai_dataset.map(parse_helper)
-                all_parsed_test_dahai = all_parsed_test_dahai.apply(
-                    tf.contrib.data.padded_batch_and_drop_remainder(
-                        batch_size=config.batch_size, padded_shapes=(
-                            [config.max_sent_num, 64], [config.max_sent_num, config.max_sent_len],
-                            [config.max_sent_num], [config.max_sent_num], []
-                        )))
-                all_test_dahai_iter = all_parsed_test_dahai.make_one_shot_iterator()
-                all_test_dahai_next = all_test_dahai_iter.get_next()
-
-                cnt = 0
-                acc_sum = 0
-                while True:
-                    try:
-                        pred_voice_embed, pred_word_idx, pred_sent_len, true_label, pred_seq_len = sess.run(
-                            all_test_dahai_next)
-                    except tf.errors.OutOfRangeError:
-                        break
-                    acc = sess.run(accuracy, feed_dict={voice_embed: pred_voice_embed,
-                                                        word_idx: pred_word_idx,
-                                                        sent_len: pred_sent_len,
-                                                        seq_len: pred_seq_len,
-                                                        label: true_label,
-                                                        is_training: False})
-                    cnt += 1
-                    acc_sum += acc
-
-                acc_mean = acc_sum / cnt
-                print("dahai test acc in {} steps is {}".format(iter + 1, acc_mean))
-                write_log("dahai test acc in {} steps is {}".format(iter + 1, acc_mean))
+                print("model is saved!")
+                write_log("model is saved!")
 
 
 class configuration(object):
@@ -444,6 +381,31 @@ def write_log(message):
 
 
 
+def layer_norm(inputs, epsilon=1e-8, scope="layer_norm"):
+    '''Applies layer normalization. See https://arxiv.org/abs/1607.06450.
+    inputs: A tensor with 2 or more dimensions, where the first dimension has `batch_size`.
+    epsilon: A floating number. A very small number for preventing ZeroDivision Error.
+    scope: Optional scope for `variable_scope`.
+
+    Returns:
+      A tensor with the same shape and data dtype as `inputs`.
+    '''
+    with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
+        inputs_shape = inputs.get_shape()
+        params_shape = inputs_shape[-1:]
+
+        mean, variance = tf.nn.moments(inputs, [-1], keep_dims=True)
+        beta = tf.get_variable("beta", params_shape, initializer=tf.zeros_initializer())
+        gamma = tf.get_variable("gamma", params_shape, initializer=tf.ones_initializer())
+        normalized = (inputs - mean) / ((variance + epsilon) ** (.5))
+        outputs = gamma * normalized + beta
+
+    return outputs
+
+
+
+
+
 
 if __name__ == "__main__":
     config = configuration()
@@ -452,8 +414,8 @@ if __name__ == "__main__":
     config.iteration = 50000
     config.lr = 1e-2
     config.drop_rate = 0.5
-    config.model_name = "pure_sentrnn_for_compare_with_postag_layernorm"
-    config.model_path = '/workspace/speaker_verification/{}/'.format(config.model_name)
+    config.model_name = "sentRNN_concat2add_control_group"
+    config.model_path = '/share/kangyu/speaker_verification/{}/'.format(config.model_name)
     config.train_log = os.path.join(config.model_path, "train.log")
     config.lr_decay_step = 2000
     config.lr_decay_step_force = 10000
